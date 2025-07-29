@@ -93,7 +93,7 @@ class ArticleController extends Controller
         //
         
                 // On met à jour l'article modifié a partir de son identifiant
-            $article->delete() ; 
+                $article->delete() ; 
         
                 // Retour de la création de l'article au format JSON.
         
