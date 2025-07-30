@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Articles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .container {
+            margin: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .articles {
+            list-style-type: none;
+            padding: 0;
+        }
+        .article-item {
+            background-color: #ffffff;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .article-item button {
+            background-color: #f44336;
+        }
+        .article-detail {
+            background-color: #ffffff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .article-form input, .article-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Gestion des Articles</h1>
+</header>
+
+<div class="container">
+    <button onclick="getAllArticles()">Charger tous les articles</button>
+    
+    <div id="article-list">
+        <ul class="articles"></ul>
+    </div>
+
+    <div id="article-detail" class="article-detail" style="display: none;">
+        <h2>Détails de l'article</h2>
+        <div id="article-info"></div>
+        <button onclick="hideArticleDetail()">Retour à la liste</button>
+    </div>
+
+    <div class="article-form" style="display: none;">
+        <h2>Créer un nouvel article</h2>
+        <input type="text" id="title" placeholder="Titre" />
+        <textarea id="content" rows="5" placeholder="Contenu"></textarea>
+        <button onclick="createArticle()">Créer</button>
+    </div>
+</div>
+
+<script>
+    const apiUrl = 'http://localhost:8000/api/article';
+
+    // Fonction pour charger tous les articles
+    async function getAllArticles() {
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const articleList = document.querySelector('.articles');
+            articleList.innerHTML = '';  // Clear previous list
+
+            if (data.success && data.articles) {
+                data.articles.forEach(article => {
+                    const articleItem = document.createElement('li');
+                    articleItem.classList.add('article-item');
+                    articleItem.innerHTML = `
+                        <strong>${article.title}</strong>
+                        <p>${article.content.slice(0, 100)}...</p>
+                        <button onclick="viewArticle(${article.id})">Voir</button>
+                        <button onclick="deleteArticle(${article.id})">Supprimer</button>
+                    `;
+                    articleList.appendChild(articleItem);
+                });
+            } else {
+                articleList.innerHTML = '<li>Aucun article trouvé.</li>';
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération des articles:', error);
+        }
+    }
+
+    // Fonction pour afficher un article en détail
+    async function viewArticle(id) {
+        try {
+            const response = await fetch(`${apiUrl}/${id}`);
+            const data = await response.json();
+
+            if (data.success && data.article) {
+                document.getElementById('article-info').innerHTML = `
+                    <strong>${data.article.title}</strong>
+                    <p>${data.article.content}</p>
+                `;
+                document.getElementById('article-detail').style.display = 'block';
+                document.getElementById('article-list').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération de l\'article:', error);
+        }
+    }
+
+    // Masquer les détails de l'article et revenir à la liste
+    function hideArticleDetail() {
+        document.getElementById('article-detail').style.display = 'none';
+        document.getElementById('article-list').style.display = 'block';
+    }
+
+    // Fonction pour supprimer un article
+    async function deleteArticle(id) {
+        try {
+            const response = await fetch(`${apiUrl}/${id}`, {
+                method: 'DELETE',
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Article supprimé avec succès');
+                getAllArticles();  // Recharger la liste après suppression
+            } else {
+                alert('Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la suppression de l\'article:', error);
+        }
+    }
+
+    // Fonction pour afficher le formulaire de création d'article
+    function showCreateForm() {
+        document.querySelector('.article-form').style.display = 'block';
+    }
+
+    // Fonction pour créer un nouvel article
+    async function createArticle() {
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+
+        if (!title || !content) {
+            alert('Veuillez remplir tous les champs.');
+            return;
+        }
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, content })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Article créé avec succès');
+                getAllArticles();  // Recharger la liste après création
+            } else {
+                alert('Erreur lors de la création de l\'article');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la création de l\'article:', error);
+        }
+    }
+</script>
+
+</body>
+</html>

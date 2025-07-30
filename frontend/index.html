@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire d'Articles - API Laravel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <i class="fas fa-newspaper"></i>
+                Gestionnaire d'Articles
+            </h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualiser
+                </button>
+                <button id="addArticleBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Nouvel Article
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalArticles">0</h3>
+                            <p>Total Articles</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon published">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="publishedArticles">0</h3>
+                            <p>Publiés</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon draft">
+                            <i class="fas fa-eye-slash"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="draftArticles">0</h3>
+                            <p>Brouillons</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search and Filters -->
+            <section class="search-section">
+                <div class="search-filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Rechercher des articles...">
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">Tous</button>
+                        <button class="filter-btn" data-filter="published">Publiés</button>
+                        <button class="filter-btn" data-filter="draft">Brouillons</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Articles List -->
+            <section class="articles-section">
+                <div id="articlesContainer" class="articles-grid">
+                    <!-- Les articles seront injectés ici par JavaScript -->
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loadingState" class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Chargement des articles...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <h3>Aucun article trouvé</h3>
+                    <p>Commencez par créer votre premier article</p>
+                    <button class="btn btn-primary" onclick="openModal()">
+                        <i class="fas fa-plus"></i>
+                        Créer un article
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal for Add/Edit Article -->
+    <div id="articleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">
+                    <i class="fas fa-plus"></i>
+                    Nouvel Article
+                </h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="articleForm" class="modal-body">
+                <div class="form-group">
+                    <label for="articleTitle">
+                        <i class="fas fa-heading"></i>
+                        Titre de l'article
+                    </label>
+                    <input type="text" id="articleTitle" name="title" required maxlength="255" 
+                           placeholder="Entrez le titre de votre article...">
+                    <div class="form-error" id="titleError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="articleContent">
+                        <i class="fas fa-edit"></i>
+                        Contenu
+                    </label>
+                    <textarea id="articleContent" name="content" required rows="10" 
+                              placeholder="Rédigez le contenu de votre article..."></textarea>
+                    <div class="form-error" id="contentError"></div>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="articlePublished" name="published">
+                        <span class="checkmark"></span>
+                        <span class="label-text">
+                            <i class="fas fa-eye"></i>
+                            Publier immédiatement
+                        </span>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content confirm-modal">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Confirmation
+                </h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Êtes-vous sûr de vouloir supprimer cet article ?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()">
+                    <i class="fas fa-times"></i>
+                    Annuler
+                </button>
+                <button class="btn btn-danger" id="confirmBtn">
+                    <i class="fas fa-trash"></i>
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
